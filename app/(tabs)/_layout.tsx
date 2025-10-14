@@ -1,19 +1,21 @@
+import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import React from 'react';
-// Removed unused StyleSheet import
-
-import { Ionicons } from '@expo/vector-icons';
+import useTheme from '../../hooks/useTheme';
 
 const Layout = () => {
+    const { colors } = useTheme();
+    
     return (
         <Tabs
             screenOptions={{
-                tabBarActiveTintColor: '#007AFF',
-                tabBarInactiveTintColor: '#8e8e93',
+                tabBarActiveTintColor: colors.primary,
+                tabBarInactiveTintColor: colors.textMuted,
                 tabBarStyle: {
-                    backgroundColor: '#000000ff',
-                    borderTopWidth: 0,
-                    shadowColor: '#000'
+                    backgroundColor: colors.surface,
+                    borderTopWidth: 1,
+                    borderTopColor: colors.border,
+                    shadowColor: colors.shadow,
                 },
                 tabBarLabelStyle: {
                     fontSize: 14,

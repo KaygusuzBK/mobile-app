@@ -1,24 +1,24 @@
 import { StyleSheet, Text, View } from "react-native";
+import useTheme from "../../hooks/useTheme";
+
+export default function Index() {
+  const { colors } = useTheme();
+  
+  return (
+    <View style={[styles.container, { backgroundColor: colors.bg }]}>
+      <Text style={[styles.content, { color: colors.text }]}>Hello, This is the main screen</Text>
+    </View>
+  );
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffffff',
     alignItems: 'center',
     justifyContent: 'center',
-    },
-    content: {
+  },
+  content: {
     fontSize: 20,
     fontWeight: 'bold',
   },  
 });
-
-export default function Index() {
-  return (
-    <View
-      style={styles.container}
-    >
-      <Text style={styles.content}>Hello, This is the main screen</Text>
-    </View>
-  );
-}
