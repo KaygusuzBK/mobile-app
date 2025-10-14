@@ -3,5 +3,13 @@
     "source.fixAll": "explicit",
     "source.organizeImports": "explicit",
     "source.sortMembers": "explicit"
-  }
+  },
+  // Terminal zil (bell) sesini kapat
+  // Görsel bell kullanımı (ses yerine titreşim/görsel) - tamamen kapatmak için false
+  "terminal.integrated.enableVisualBell": false,
+  // Terminal zilini işaret dili / sinyal sistemi üzerinden tamamen sustur
+  // Terminal zil sinyalini devre dışı bırak (boş obje = override / kapalı varsayılanı kullan)
+  "accessibility.signals.terminalBell": {},
+  // Tüm sesli ipuçlarını kapat
+  "audioCues.enabled": "off"
 }
