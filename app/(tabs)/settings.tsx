@@ -1,11 +1,11 @@
+import { api } from '@/convex/_generated/api';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useMutation } from 'convex/react';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useRef, useState } from 'react';
-import { Alert, Animated, StatusBar, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Animated, StatusBar, StyleSheet, Switch, Text, TouchableOpacity, View, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { api } from '@/convex/_generated/api';
-import { useMutation } from 'convex/react';
 import useTheme from '../../hooks/useTheme';
 
 const Settings = () => {
@@ -125,15 +125,20 @@ const Settings = () => {
                     </View>
                 </Animated.View>
                 
-                <Animated.View 
-                    style={[
-                        styles.content,
-                        {
-                            opacity: fadeAnim,
-                            transform: [{ translateY: slideAnim }]
-                        }
-                    ]}
+                <ScrollView 
+                    style={styles.scrollContainer}
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={styles.scrollContent}
                 >
+                    <Animated.View 
+                        style={[
+                            styles.content,
+                            {
+                                opacity: fadeAnim,
+                                transform: [{ translateY: slideAnim }]
+                            }
+                        ]}
+                    >
                     <View style={[styles.section, { backgroundColor: colors.surface }]}>
                         <Text style={[styles.sectionTitle, { color: colors.text }]}>Tema Tercihleri</Text>
                         
@@ -285,7 +290,8 @@ const Settings = () => {
                             <Ionicons name="chevron-forward" size={20} color={colors.danger} />
                         </TouchableOpacity>
                     </View>
-                </Animated.View>
+                    </Animated.View>
+                </ScrollView>
             </SafeAreaView>
         </LinearGradient>
     );
@@ -297,6 +303,12 @@ const styles = StyleSheet.create({
     },
     safeArea: {
         flex: 1,
+    },
+    scrollContainer: {
+        flex: 1,
+    },
+    scrollContent: {
+        paddingBottom: 20,
     },
     header: {
         paddingTop: 20,
@@ -340,7 +352,6 @@ const styles = StyleSheet.create({
         letterSpacing: -1,
     },
     content: {
-        flex: 1,
         paddingHorizontal: 20,
     },
     section: {
