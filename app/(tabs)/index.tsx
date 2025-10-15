@@ -1,38 +1,31 @@
+import { TodoInput } from "@/components/TodoInput";
+import { TodoList } from "@/components/TodoList";
 import { api } from "@/convex/_generated/api";
-import { useMutation, useQuery } from "convex/react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useMutation } from "convex/react";
+import { LinearGradient } from "expo-linear-gradient";
+import { StatusBar } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { createHomeStyles } from "../../assets/images/styles/home.styles";
+import Header from "../../components/Header";
 import useTheme from "../../hooks/useTheme";
 
 export default function Index() {
   const { colors } = useTheme();
+  const homeStyles = createHomeStyles(colors);
+  const addTodo = useMutation(api.todos.addTodo);
 
-  const todos = useQuery(api.todos.getTodos);
-  console.log(todos);
+  const handleAddTodo = (text: string) => {
+    addTodo({ text });
+  };
 
-const addTodo = useMutation(api.todos.addTodo);
-const clearAllTodos = useMutation(api.todos.clearAllTodos);
-  
   return (
-    <View style={[styles.container, { backgroundColor: colors.bg }]}>
-      <Text style={[styles.content, { color: colors.text }]}>Hello, This is the main screen</Text>
-      <TouchableOpacity onPress={() => addTodo({ text: "New Todo" })}>
-        <Text style={{ color: colors.text }}>Add Todo</Text>
-      </TouchableOpacity>
-      <TouchableOpacity onPress={() => clearAllTodos()}>
-        <Text style={{ color: colors.text }}>Clear All Todos</Text>
-      </TouchableOpacity>
-    </View>
+    <LinearGradient colors={colors.gradients.background} style={homeStyles.container}>
+      <SafeAreaView style={homeStyles.safeArea}>
+        <StatusBar barStyle={colors.statusBarStyle} />
+        <Header />
+        <TodoInput onAddTodo={handleAddTodo} />
+        <TodoList />
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  content: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },  
-});

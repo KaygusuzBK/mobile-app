@@ -13,13 +13,26 @@ const Layout = () => {
                 tabBarInactiveTintColor: colors.textMuted,
                 tabBarStyle: {
                     backgroundColor: colors.surface,
-                    borderTopWidth: 1,
-                    borderTopColor: colors.border,
+                    borderTopWidth: 0,
                     shadowColor: colors.shadow,
+                    shadowOffset: {
+                        width: 0,
+                        height: -4,
+                    },
+                    shadowOpacity: 0.1,
+                    shadowRadius: 8,
+                    elevation: 16,
+                    paddingBottom: 8,
+                    paddingTop: 8,
+                    height: 80,
                 },
                 tabBarLabelStyle: {
-                    fontSize: 14,
+                    fontSize: 12,
                     fontWeight: '600',
+                    marginTop: 4,
+                },
+                tabBarIconStyle: {
+                    marginTop: 4,
                 },
                 headerShown: false,
             }}
@@ -27,8 +40,8 @@ const Layout = () => {
             <Tabs.Screen
                 name="index"
                 options={{
-                    title: 'Todos',
-                    tabBarLabel: 'Todos',
+                    title: 'Görevler',
+                    tabBarLabel: 'Görevler',
                     headerShown: false,
                     tabBarIcon: ({ color, size }) => (
                         <Ionicons name="checkmark-done-outline" size={size ?? 24} color={color} />
@@ -38,8 +51,8 @@ const Layout = () => {
             <Tabs.Screen
                 name="settings"
                 options={{
-                    title: 'Settings',
-                    tabBarLabel: 'Settings',
+                    title: 'Ayarlar',
+                    tabBarLabel: 'Ayarlar',
                     headerShown: false,
                     tabBarIcon: ({ color, size }) => (
                         <Ionicons name="settings-outline" size={size ?? 24} color={color} />

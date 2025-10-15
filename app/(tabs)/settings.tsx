@@ -1,47 +1,128 @@
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
-import { StyleSheet, Switch, Text, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import React, { useEffect, useRef } from 'react';
+import { Animated, StatusBar, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import useTheme from '../../hooks/useTheme';
 
 const Settings = () => {
     const { isDarkMode, toggleDarkMode, colors } = useTheme();
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+    const slideAnim = useRef(new Animated.Value(50)).current;
+
+    useEffect(() => {
+        Animated.parallel([
+            Animated.timing(fadeAnim, {
+                toValue: 1,
+                duration: 600,
+                useNativeDriver: true,
+            }),
+            Animated.timing(slideAnim, {
+                toValue: 0,
+                duration: 600,
+                useNativeDriver: true,
+            }),
+        ]).start();
+    }, []);
 
     return (
-        <View style={[styles.container, { backgroundColor: colors.bg }]}>
-            <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
-                <Text style={[styles.headerTitle, { color: colors.text }]}>Settings</Text>
-            </View>
-            
-            <View style={styles.content}>
-                <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Preferences</Text>
-                    
-                    <View style={[styles.settingItem, { borderBottomColor: colors.border }]}>
-                        <View style={styles.settingLeft}>
-                            <Ionicons 
-                                name={isDarkMode ? "moon" : "sunny"} 
-                                size={24} 
-                                color={colors.primary} 
-                                style={styles.settingIcon}
+        <LinearGradient colors={colors.gradients.background} style={styles.container}>
+            <SafeAreaView style={styles.safeArea}>
+                <StatusBar barStyle={colors.statusBarStyle} />
+                <Animated.View 
+                    style={[
+                        styles.header, 
+                        { 
+                            backgroundColor: colors.surface,
+                            opacity: fadeAnim,
+                            transform: [{ translateY: slideAnim }]
+                        }
+                    ]}
+                >
+                    <View style={styles.headerContent}>
+                        <View style={[styles.iconContainer, { backgroundColor: colors.primary }]}>
+                            <Ionicons name="settings-outline" size={32} color="#fff" />
+                        </View>
+                        <Text style={[styles.headerTitle, { color: colors.text }]}>Ayarlar</Text>
+                    </View>
+                </Animated.View>
+                
+                <Animated.View 
+                    style={[
+                        styles.content,
+                        {
+                            opacity: fadeAnim,
+                            transform: [{ translateY: slideAnim }]
+                        }
+                    ]}
+                >
+                    <View style={[styles.section, { backgroundColor: colors.surface }]}>
+                        <Text style={[styles.sectionTitle, { color: colors.text }]}>Tema Tercihleri</Text>
+                        
+                        <TouchableOpacity 
+                            style={[styles.settingItem, { borderBottomColor: colors.border }]}
+                            activeOpacity={0.7}
+                        >
+                            <View style={styles.settingLeft}>
+                                <View style={[styles.iconWrapper, { backgroundColor: colors.primary }]}>
+                                    <Ionicons 
+                                        name={isDarkMode ? "moon" : "sunny"} 
+                                        size={24} 
+                                        color="#fff"
+                                    />
+                                </View>
+                                <View style={styles.settingTextContainer}>
+                                    <Text style={[styles.settingTitle, { color: colors.text }]}>Karanlık Mod</Text>
+                                    <Text style={[styles.settingSubtitle, { color: colors.textMuted }]}>
+                                        {isDarkMode ? "Karanlık tema aktif" : "Açık tema aktif"}
+                                    </Text>
+                                </View>
+                            </View>
+                            <Switch
+                                value={isDarkMode}
+                                onValueChange={toggleDarkMode}
+                                trackColor={{ false: colors.border, true: colors.primary }}
+                                thumbColor={isDarkMode ? colors.surface : colors.textMuted}
+                                ios_backgroundColor={colors.border}
                             />
-                            <View style={styles.settingTextContainer}>
-                                <Text style={[styles.settingTitle, { color: colors.text }]}>Dark Mode</Text>
-                                <Text style={[styles.settingSubtitle, { color: colors.textMuted }]}>
-                                    {isDarkMode ? "Dark theme enabled" : "Light theme enabled"}
-                                </Text>
+                        </TouchableOpacity>
+                    </View>
+
+                    <View style={[styles.section, { backgroundColor: colors.surface }]}>
+                        <Text style={[styles.sectionTitle, { color: colors.text }]}>Uygulama Bilgileri</Text>
+                        
+                        <View style={[styles.settingItem, { borderBottomColor: colors.border }]}>
+                            <View style={styles.settingLeft}>
+                                <View style={[styles.iconWrapper, { backgroundColor: colors.success }]}>
+                                    <Ionicons name="information-circle" size={24} color="#fff" />
+                                </View>
+                                <View style={styles.settingTextContainer}>
+                                    <Text style={[styles.settingTitle, { color: colors.text }]}>Versiyon</Text>
+                                    <Text style={[styles.settingSubtitle, { color: colors.textMuted }]}>
+                                        v1.0.0
+                                    </Text>
+                                </View>
                             </View>
                         </View>
-                        <Switch
-                            value={isDarkMode}
-                            onValueChange={toggleDarkMode}
-                            trackColor={{ false: colors.border, true: colors.primary }}
-                            thumbColor={isDarkMode ? colors.surface : colors.textMuted}
-                            ios_backgroundColor={colors.border}
-                        />
+
+                        <View style={styles.settingItem}>
+                            <View style={styles.settingLeft}>
+                                <View style={[styles.iconWrapper, { backgroundColor: colors.warning }]}>
+                                    <Ionicons name="star" size={24} color="#fff" />
+                                </View>
+                                <View style={styles.settingTextContainer}>
+                                    <Text style={[styles.settingTitle, { color: colors.text }]}>Değerlendir</Text>
+                                    <Text style={[styles.settingSubtitle, { color: colors.textMuted }]}>
+                                        Uygulamayı beğendiyseniz değerlendirin
+                                    </Text>
+                                </View>
+                            </View>
+                            <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+                        </View>
                     </View>
-                </View>
-            </View>
-        </View>
+                </Animated.View>
+            </SafeAreaView>
+        </LinearGradient>
     );
 }
 
@@ -49,37 +130,79 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
     },
+    safeArea: {
+        flex: 1,
+    },
     header: {
-        paddingTop: 60,
+        paddingTop: 20,
         paddingBottom: 20,
-        paddingHorizontal: 20,
-        borderBottomWidth: 1,
+        paddingHorizontal: 24,
+        marginBottom: 20,
+        borderRadius: 20,
+        marginHorizontal: 20,
+        shadowColor: "#000",
+        shadowOffset: {
+            width: 0,
+            height: 4,
+        },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+        elevation: 8,
+    },
+    headerContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    iconContainer: {
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 16,
+        shadowColor: "#000",
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.15,
+        shadowRadius: 4,
+        elevation: 4,
     },
     headerTitle: {
         fontSize: 32,
-        fontWeight: 'bold',
+        fontWeight: '700',
+        letterSpacing: -1,
     },
     content: {
         flex: 1,
-        padding: 20,
+        paddingHorizontal: 20,
     },
     section: {
-        borderRadius: 12,
-        borderWidth: 1,
+        borderRadius: 20,
+        marginBottom: 20,
+        shadowColor: "#000",
+        shadowOffset: {
+            width: 0,
+            height: 4,
+        },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+        elevation: 8,
         overflow: 'hidden',
     },
     sectionTitle: {
         fontSize: 18,
         fontWeight: '600',
-        paddingHorizontal: 16,
-        paddingVertical: 12,
+        paddingHorizontal: 20,
+        paddingVertical: 16,
         borderBottomWidth: 1,
     },
     settingItem: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: 16,
+        paddingHorizontal: 20,
         paddingVertical: 16,
         borderBottomWidth: 1,
     },
@@ -88,19 +211,33 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         flex: 1,
     },
-    settingIcon: {
-        marginRight: 12,
+    iconWrapper: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 16,
+        shadowColor: "#000",
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 4,
     },
     settingTextContainer: {
         flex: 1,
     },
     settingTitle: {
         fontSize: 16,
-        fontWeight: '500',
+        fontWeight: '600',
         marginBottom: 2,
     },
     settingSubtitle: {
         fontSize: 14,
+        fontWeight: '400',
     },
 })
 
