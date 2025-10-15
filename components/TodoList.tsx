@@ -39,8 +39,6 @@ const TodoItem: React.FC<TodoItemProps> = ({
   const [editText, setEditText] = useState(text);
   const [scaleAnim] = useState(new Animated.Value(1));
   const [opacityAnim] = useState(new Animated.Value(1));
-  const [translateX] = useState(new Animated.Value(0));
-  const [showActions, setShowActions] = useState(false);
   
   const pan = useRef(new Animated.ValueXY()).current;
 
@@ -49,7 +47,6 @@ const TodoItem: React.FC<TodoItemProps> = ({
       toValue: { x: 0, y: 0 },
       useNativeDriver: false,
     }).start();
-    setShowActions(false);
   };
 
   const panResponder = PanResponder.create({
@@ -74,7 +71,6 @@ const TodoItem: React.FC<TodoItemProps> = ({
           toValue: { x: 120, y: 0 },
           useNativeDriver: false,
         }).start();
-        setShowActions(true);
         setTimeout(() => {
           handleEdit();
         }, 300);
@@ -84,7 +80,6 @@ const TodoItem: React.FC<TodoItemProps> = ({
           toValue: { x: -120, y: 0 },
           useNativeDriver: false,
         }).start();
-        setShowActions(true);
         setTimeout(() => {
           handleDelete();
         }, 300);
