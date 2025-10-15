@@ -2,14 +2,16 @@ import { api } from '@/convex/_generated/api';
 import useTheme from '@/hooks/useTheme';
 import { Ionicons } from '@expo/vector-icons';
 import { useMutation, useQuery } from 'convex/react';
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
     Animated,
     FlatList,
     Text,
     TextInput,
     TouchableOpacity,
-    View
+    View,
+    PanGestureHandler,
+    State
 } from 'react-native';
 import { createHomeStyles } from '../assets/images/styles/home.styles';
 
@@ -38,6 +40,10 @@ const TodoItem: React.FC<TodoItemProps> = ({
   const [editText, setEditText] = useState(text);
   const [scaleAnim] = useState(new Animated.Value(1));
   const [opacityAnim] = useState(new Animated.Value(1));
+  const [translateX] = useState(new Animated.Value(0));
+  const [showActions, setShowActions] = useState(false);
+  
+  const panGestureRef = useRef();
 
   const handleToggle = () => {
     Animated.sequence([
@@ -72,6 +78,11 @@ const TodoItem: React.FC<TodoItemProps> = ({
     });
   };
 
+  const handleEdit = () => {
+    setIsEditing(true);
+    resetPosition();
+  };
+
   const handleSaveEdit = () => {
     if (editText.trim()) {
       onUpdate(id, editText.trim());
@@ -84,6 +95,51 @@ const TodoItem: React.FC<TodoItemProps> = ({
     setIsEditing(false);
   };
 
+  const resetPosition = () => {
+    Animated.spring(translateX, {
+      toValue: 0,
+      useNativeDriver: true,
+    }).start();
+    setShowActions(false);
+  };
+
+  const onGestureEvent = Animated.event(
+    [{ nativeEvent: { translationX: translateX } }],
+    { useNativeDriver: true }
+  );
+
+  const onHandlerStateChange = (event: any) => {
+    if (event.nativeEvent.state === State.END) {
+      const { translationX, velocityX } = event.nativeEvent;
+      
+      if (translationX > 80 || velocityX > 800) {
+        // Swipe right - Edit
+        Animated.spring(translateX, {
+          toValue: 100,
+          useNativeDriver: true,
+        }).start();
+        setShowActions(true);
+        // Auto trigger edit after showing action
+        setTimeout(() => {
+          handleEdit();
+        }, 300);
+      } else if (translationX < -80 || velocityX < -800) {
+        // Swipe left - Delete
+        Animated.spring(translateX, {
+          toValue: -100,
+          useNativeDriver: true,
+        }).start();
+        setShowActions(true);
+        // Auto trigger delete after showing action
+        setTimeout(() => {
+          handleDelete();
+        }, 300);
+      } else {
+        resetPosition();
+      }
+    }
+  };
+
   return (
     <Animated.View
       style={[
@@ -94,84 +150,97 @@ const TodoItem: React.FC<TodoItemProps> = ({
         },
       ]}
     >
-      <View style={[homeStyles.todoItem, { backgroundColor: colors.surface }]}>
-        <TouchableOpacity
-          style={homeStyles.checkbox}
-          onPress={handleToggle}
-          activeOpacity={0.7}
+      <View style={styles.container}>
+        {/* Background Actions */}
+        <View style={styles.backgroundActions}>
+          <View style={[styles.actionLeft, { backgroundColor: colors.primary }]}>
+            <Ionicons name="pencil" size={24} color="#fff" />
+            <Text style={styles.actionText}>Düzenle</Text>
+          </View>
+          <View style={[styles.actionRight, { backgroundColor: colors.danger }]}>
+            <Ionicons name="trash" size={24} color="#fff" />
+            <Text style={styles.actionText}>Sil</Text>
+          </View>
+        </View>
+
+        {/* Main Card */}
+        <PanGestureHandler
+          ref={panGestureRef}
+          onGestureEvent={onGestureEvent}
+          onHandlerStateChange={onHandlerStateChange}
         >
-          <View
+          <Animated.View
             style={[
-              homeStyles.checkboxInner,
-              {
-                backgroundColor: isCompleted ? colors.success : 'transparent',
-                borderColor: isCompleted ? colors.success : colors.border,
-              },
+              homeStyles.todoItem,
+              { 
+                backgroundColor: colors.surface,
+                transform: [{ translateX }]
+              }
             ]}
           >
-            {isCompleted && (
-              <Ionicons name="checkmark" size={20} color="#fff" />
-            )}
-          </View>
-        </TouchableOpacity>
-
-        <View style={homeStyles.todoTextContainer}>
-          {isEditing ? (
-            <View style={homeStyles.editContainer}>
-              <TextInput
-                style={[homeStyles.editInput, { backgroundColor: colors.backgrounds.editInput }]}
-                value={editText}
-                onChangeText={setEditText}
-                autoFocus
-                multiline
-              />
-              <View style={homeStyles.editButtons}>
-                <TouchableOpacity
-                  style={[homeStyles.editButton, { backgroundColor: colors.success }]}
-                  onPress={handleSaveEdit}
-                >
-                  <Ionicons name="checkmark" size={16} color="#fff" />
-                  <Text style={homeStyles.editButtonText}>Kaydet</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[homeStyles.editButton, { backgroundColor: colors.danger }]}
-                  onPress={handleCancelEdit}
-                >
-                  <Ionicons name="close" size={16} color="#fff" />
-                  <Text style={homeStyles.editButtonText}>İptal</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          ) : (
-            <>
-              <Text
+            <TouchableOpacity
+              style={homeStyles.checkbox}
+              onPress={handleToggle}
+              activeOpacity={0.7}
+            >
+              <View
                 style={[
-                  homeStyles.todoText,
+                  homeStyles.checkboxInner,
                   {
-                    color: isCompleted ? colors.textMuted : colors.text,
-                    textDecorationLine: isCompleted ? 'line-through' : 'none',
+                    backgroundColor: isCompleted ? colors.success : 'transparent',
+                    borderColor: isCompleted ? colors.success : colors.border,
                   },
                 ]}
               >
-                {text}
-              </Text>
-              <View style={homeStyles.todoActions}>
-                <TouchableOpacity
-                  style={[homeStyles.actionButton, { backgroundColor: colors.primary }]}
-                  onPress={() => setIsEditing(true)}
-                >
-                  <Ionicons name="pencil" size={20} color="#fff" />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[homeStyles.actionButton, { backgroundColor: colors.danger }]}
-                  onPress={handleDelete}
-                >
-                  <Ionicons name="trash" size={20} color="#fff" />
-                </TouchableOpacity>
+                {isCompleted && (
+                  <Ionicons name="checkmark" size={20} color="#fff" />
+                )}
               </View>
-            </>
-          )}
-        </View>
+            </TouchableOpacity>
+
+            <View style={homeStyles.todoTextContainer}>
+              {isEditing ? (
+                <View style={homeStyles.editContainer}>
+                  <TextInput
+                    style={[homeStyles.editInput, { backgroundColor: colors.backgrounds.editInput }]}
+                    value={editText}
+                    onChangeText={setEditText}
+                    autoFocus
+                    multiline
+                  />
+                  <View style={homeStyles.editButtons}>
+                    <TouchableOpacity
+                      style={[homeStyles.editButton, { backgroundColor: colors.success }]}
+                      onPress={handleSaveEdit}
+                    >
+                      <Ionicons name="checkmark" size={16} color="#fff" />
+                      <Text style={homeStyles.editButtonText}>Kaydet</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[homeStyles.editButton, { backgroundColor: colors.danger }]}
+                      onPress={handleCancelEdit}
+                    >
+                      <Ionicons name="close" size={16} color="#fff" />
+                      <Text style={homeStyles.editButtonText}>İptal</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ) : (
+                <Text
+                  style={[
+                    homeStyles.todoText,
+                    {
+                      color: isCompleted ? colors.textMuted : colors.text,
+                      textDecorationLine: isCompleted ? 'line-through' : 'none',
+                    },
+                  ]}
+                >
+                  {text}
+                </Text>
+              )}
+            </View>
+          </Animated.View>
+        </PanGestureHandler>
       </View>
     </Animated.View>
   );
@@ -244,4 +313,47 @@ export const TodoList: React.FC = () => {
       />
     </View>
   );
+};
+
+const styles = {
+  container: {
+    position: 'relative' as const,
+    overflow: 'hidden' as const,
+  },
+  backgroundActions: {
+    position: 'absolute' as const,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    flexDirection: 'row' as const,
+    justifyContent: 'space-between' as const,
+    alignItems: 'center' as const,
+    paddingHorizontal: 20,
+  },
+  actionLeft: {
+    flex: 1,
+    height: '100%',
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+    flexDirection: 'row' as const,
+    gap: 8,
+    borderRadius: 20,
+    marginRight: 10,
+  },
+  actionRight: {
+    flex: 1,
+    height: '100%',
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+    flexDirection: 'row' as const,
+    gap: 8,
+    borderRadius: 20,
+    marginLeft: 10,
+  },
+  actionText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600' as const,
+  },
 };
