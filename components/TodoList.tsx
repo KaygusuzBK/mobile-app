@@ -2,7 +2,7 @@ import { api } from '@/convex/_generated/api';
 import useTheme from '@/hooks/useTheme';
 import { Ionicons } from '@expo/vector-icons';
 import { useMutation, useQuery } from 'convex/react';
-import React, { useState, useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import {
     Animated,
     FlatList,
@@ -158,11 +158,11 @@ const TodoItem: React.FC<TodoItemProps> = ({
         {/* Background Actions */}
         <View style={styles.backgroundActions}>
           <View style={[styles.actionLeft, { backgroundColor: colors.primary }]}>
-            <Ionicons name="pencil" size={24} color="#fff" />
+            <Ionicons name="pencil" size={18} color="#fff" />
             <Text style={styles.actionText}>Düzenle</Text>
           </View>
           <View style={[styles.actionRight, { backgroundColor: colors.danger }]}>
-            <Ionicons name="trash" size={24} color="#fff" />
+            <Ionicons name="trash" size={18} color="#fff" />
             <Text style={styles.actionText}>Sil</Text>
           </View>
         </View>
@@ -328,31 +328,31 @@ const styles = {
     flexDirection: 'row' as const,
     justifyContent: 'space-between' as const,
     alignItems: 'center' as const,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
   },
   actionLeft: {
-    flex: 1,
+    width: 80,
     height: '100%',
     justifyContent: 'center' as const,
     alignItems: 'center' as const,
-    flexDirection: 'row' as const,
-    gap: 8,
-    borderRadius: 20,
-    marginRight: 10,
+    flexDirection: 'column' as const,
+    gap: 4,
+    borderRadius: 16,
+    marginRight: 8,
   },
   actionRight: {
-    flex: 1,
+    width: 80,
     height: '100%',
     justifyContent: 'center' as const,
     alignItems: 'center' as const,
-    flexDirection: 'row' as const,
-    gap: 8,
-    borderRadius: 20,
-    marginLeft: 10,
+    flexDirection: 'column' as const,
+    gap: 4,
+    borderRadius: 16,
+    marginLeft: 8,
   },
   actionText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 12,
     fontWeight: '600' as const,
   },
 };
