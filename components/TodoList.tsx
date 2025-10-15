@@ -2,10 +2,11 @@ import { api } from '@/convex/_generated/api';
 import useTheme from '@/hooks/useTheme';
 import { Ionicons } from '@expo/vector-icons';
 import { useMutation, useQuery } from 'convex/react';
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
     Animated,
     FlatList,
+    PanResponder,
     Text,
     TextInput,
     TouchableOpacity,
@@ -38,6 +39,60 @@ const TodoItem: React.FC<TodoItemProps> = ({
   const [editText, setEditText] = useState(text);
   const [scaleAnim] = useState(new Animated.Value(1));
   const [opacityAnim] = useState(new Animated.Value(1));
+  const [translateX] = useState(new Animated.Value(0));
+  const [showActions, setShowActions] = useState(false);
+  
+  const pan = useRef(new Animated.ValueXY()).current;
+
+  const resetPosition = () => {
+    Animated.spring(pan, {
+      toValue: { x: 0, y: 0 },
+      useNativeDriver: false,
+    }).start();
+    setShowActions(false);
+  };
+
+  const panResponder = PanResponder.create({
+    onMoveShouldSetPanResponder: (evt, gestureState) => {
+      return Math.abs(gestureState.dx) > 10;
+    },
+    onPanResponderGrant: () => {
+      pan.setOffset({
+        x: pan.x._value,
+        y: pan.y._value,
+      });
+    },
+    onPanResponderMove: (evt, gestureState) => {
+      pan.setValue({ x: gestureState.dx, y: 0 });
+    },
+    onPanResponderRelease: (evt, gestureState) => {
+      pan.flattenOffset();
+      
+      if (gestureState.dx > 100) {
+        // Swipe right - Edit
+        Animated.spring(pan, {
+          toValue: { x: 120, y: 0 },
+          useNativeDriver: false,
+        }).start();
+        setShowActions(true);
+        setTimeout(() => {
+          handleEdit();
+        }, 300);
+      } else if (gestureState.dx < -100) {
+        // Swipe left - Delete
+        Animated.spring(pan, {
+          toValue: { x: -120, y: 0 },
+          useNativeDriver: false,
+        }).start();
+        setShowActions(true);
+        setTimeout(() => {
+          handleDelete();
+        }, 300);
+      } else {
+        resetPosition();
+      }
+    },
+  });
 
   const handleToggle = () => {
     Animated.sequence([
@@ -74,6 +129,7 @@ const TodoItem: React.FC<TodoItemProps> = ({
 
   const handleEdit = () => {
     setIsEditing(true);
+    resetPosition();
   };
 
   const handleSaveEdit = () => {
@@ -98,56 +154,78 @@ const TodoItem: React.FC<TodoItemProps> = ({
         },
       ]}
     >
-      <View style={[homeStyles.todoItem, { backgroundColor: colors.surface }]}>
-        <TouchableOpacity
-          style={homeStyles.checkbox}
-          onPress={handleToggle}
-          activeOpacity={0.7}
-        >
-          <View
-            style={[
-              homeStyles.checkboxInner,
-              {
-                backgroundColor: isCompleted ? colors.success : 'transparent',
-                borderColor: isCompleted ? colors.success : colors.border,
-              },
-            ]}
-          >
-            {isCompleted && (
-              <Ionicons name="checkmark" size={20} color="#fff" />
-            )}
+      <View style={styles.container}>
+        {/* Background Actions */}
+        <View style={styles.backgroundActions}>
+          <View style={[styles.actionLeft, { backgroundColor: colors.primary }]}>
+            <Ionicons name="pencil" size={24} color="#fff" />
+            <Text style={styles.actionText}>Düzenle</Text>
           </View>
-        </TouchableOpacity>
+          <View style={[styles.actionRight, { backgroundColor: colors.danger }]}>
+            <Ionicons name="trash" size={24} color="#fff" />
+            <Text style={styles.actionText}>Sil</Text>
+          </View>
+        </View>
 
-        <View style={homeStyles.todoTextContainer}>
-          {isEditing ? (
-            <View style={homeStyles.editContainer}>
-              <TextInput
-                style={[homeStyles.editInput, { backgroundColor: colors.backgrounds.editInput }]}
-                value={editText}
-                onChangeText={setEditText}
-                autoFocus
-                multiline
-              />
-              <View style={homeStyles.editButtons}>
-                <TouchableOpacity
-                  style={[homeStyles.editButton, { backgroundColor: colors.success }]}
-                  onPress={handleSaveEdit}
-                >
-                  <Ionicons name="checkmark" size={16} color="#fff" />
-                  <Text style={homeStyles.editButtonText}>Kaydet</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[homeStyles.editButton, { backgroundColor: colors.danger }]}
-                  onPress={handleCancelEdit}
-                >
-                  <Ionicons name="close" size={16} color="#fff" />
-                  <Text style={homeStyles.editButtonText}>İptal</Text>
-                </TouchableOpacity>
-              </View>
+        {/* Main Card */}
+        <Animated.View
+          style={[
+            homeStyles.todoItem,
+            { 
+              backgroundColor: colors.surface,
+              transform: pan.getTranslateTransform()
+            }
+          ]}
+          {...panResponder.panHandlers}
+        >
+          <TouchableOpacity
+            style={homeStyles.checkbox}
+            onPress={handleToggle}
+            activeOpacity={0.7}
+          >
+            <View
+              style={[
+                homeStyles.checkboxInner,
+                {
+                  backgroundColor: isCompleted ? colors.success : 'transparent',
+                  borderColor: isCompleted ? colors.success : colors.border,
+                },
+              ]}
+            >
+              {isCompleted && (
+                <Ionicons name="checkmark" size={20} color="#fff" />
+              )}
             </View>
-          ) : (
-            <>
+          </TouchableOpacity>
+
+          <View style={homeStyles.todoTextContainer}>
+            {isEditing ? (
+              <View style={homeStyles.editContainer}>
+                <TextInput
+                  style={[homeStyles.editInput, { backgroundColor: colors.backgrounds.editInput }]}
+                  value={editText}
+                  onChangeText={setEditText}
+                  autoFocus
+                  multiline
+                />
+                <View style={homeStyles.editButtons}>
+                  <TouchableOpacity
+                    style={[homeStyles.editButton, { backgroundColor: colors.success }]}
+                    onPress={handleSaveEdit}
+                  >
+                    <Ionicons name="checkmark" size={16} color="#fff" />
+                    <Text style={homeStyles.editButtonText}>Kaydet</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[homeStyles.editButton, { backgroundColor: colors.danger }]}
+                    onPress={handleCancelEdit}
+                  >
+                    <Ionicons name="close" size={16} color="#fff" />
+                    <Text style={homeStyles.editButtonText}>İptal</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ) : (
               <Text
                 style={[
                   homeStyles.todoText,
@@ -159,23 +237,9 @@ const TodoItem: React.FC<TodoItemProps> = ({
               >
                 {text}
               </Text>
-              <View style={homeStyles.todoActions}>
-                <TouchableOpacity
-                  style={[homeStyles.actionButton, { backgroundColor: colors.primary }]}
-                  onPress={handleEdit}
-                >
-                  <Ionicons name="pencil" size={20} color="#fff" />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[homeStyles.actionButton, { backgroundColor: colors.danger }]}
-                  onPress={handleDelete}
-                >
-                  <Ionicons name="trash" size={20} color="#fff" />
-                </TouchableOpacity>
-              </View>
-            </>
-          )}
-        </View>
+            )}
+          </View>
+        </Animated.View>
       </View>
     </Animated.View>
   );
@@ -248,4 +312,47 @@ export const TodoList: React.FC = () => {
       />
     </View>
   );
+};
+
+const styles = {
+  container: {
+    position: 'relative' as const,
+    overflow: 'hidden' as const,
+  },
+  backgroundActions: {
+    position: 'absolute' as const,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    flexDirection: 'row' as const,
+    justifyContent: 'space-between' as const,
+    alignItems: 'center' as const,
+    paddingHorizontal: 20,
+  },
+  actionLeft: {
+    flex: 1,
+    height: '100%',
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+    flexDirection: 'row' as const,
+    gap: 8,
+    borderRadius: 20,
+    marginRight: 10,
+  },
+  actionRight: {
+    flex: 1,
+    height: '100%',
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+    flexDirection: 'row' as const,
+    gap: 8,
+    borderRadius: 20,
+    marginLeft: 10,
+  },
+  actionText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600' as const,
+  },
 };
