@@ -23,7 +23,7 @@ const Header = () => {
       duration: 800,
       useNativeDriver: false,
     }).start();
-  }, [progressPercentage]);
+  }, [progressPercentage, progressAnim]);
 
   return (
     <View style={homeStyles.header}>

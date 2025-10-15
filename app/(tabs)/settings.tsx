@@ -1,16 +1,45 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useEffect, useRef } from 'react';
-import { Animated, StatusBar, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { Alert, Animated, StatusBar, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { api } from '@/convex/_generated/api';
+import { useMutation } from 'convex/react';
 import useTheme from '../../hooks/useTheme';
 
 const Settings = () => {
     const { isDarkMode, toggleDarkMode, colors } = useTheme();
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const slideAnim = useRef(new Animated.Value(50)).current;
+    
+    // Settings state
+    const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+    const [autoSyncEnabled, setAutoSyncEnabled] = useState(true);
+    
+    // Mutations
+    const clearAllTodos = useMutation(api.todos.clearAllTodos);
 
     useEffect(() => {
+        // Load settings from AsyncStorage
+        const loadSettings = async () => {
+            try {
+                const notifications = await AsyncStorage.getItem('notificationsEnabled');
+                const autoSync = await AsyncStorage.getItem('autoSyncEnabled');
+                
+                if (notifications !== null) {
+                    setNotificationsEnabled(JSON.parse(notifications));
+                }
+                if (autoSync !== null) {
+                    setAutoSyncEnabled(JSON.parse(autoSync));
+                }
+            } catch (error) {
+                console.error('Error loading settings:', error);
+            }
+        };
+        
+        loadSettings();
+        
         Animated.parallel([
             Animated.timing(fadeAnim, {
                 toValue: 1,
@@ -23,7 +52,56 @@ const Settings = () => {
                 useNativeDriver: true,
             }),
         ]).start();
-    }, []);
+    }, [fadeAnim, slideAnim]);
+
+    const handleNotificationsToggle = async (value: boolean) => {
+        try {
+            await AsyncStorage.setItem('notificationsEnabled', JSON.stringify(value));
+            setNotificationsEnabled(value);
+        } catch (error) {
+            console.error('Error saving notifications setting:', error);
+        }
+    };
+
+    const handleAutoSyncToggle = async (value: boolean) => {
+        try {
+            await AsyncStorage.setItem('autoSyncEnabled', JSON.stringify(value));
+            setAutoSyncEnabled(value);
+        } catch (error) {
+            console.error('Error saving auto sync setting:', error);
+        }
+    };
+
+    const handleResetApp = () => {
+        Alert.alert(
+            'Uygulamayı Sıfırla',
+            'Bu işlem tüm görevleri siler ve uygulamayı başlangıç durumuna döndürür. Bu işlem geri alınamaz. Devam etmek istediğinizden emin misiniz?',
+            [
+                {
+                    text: 'İptal',
+                    style: 'cancel',
+                },
+                {
+                    text: 'Sıfırla',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            await clearAllTodos();
+                            await AsyncStorage.multiRemove([
+                                'notificationsEnabled',
+                                'autoSyncEnabled',
+                                'darkMode'
+                            ]);
+                            Alert.alert('Başarılı', 'Uygulama başarıyla sıfırlandı!');
+                        } catch (error) {
+                            console.error('Error resetting app:', error);
+                            Alert.alert('Hata', 'Uygulama sıfırlanırken bir hata oluştu.');
+                        }
+                    },
+                },
+            ]
+        );
+    };
 
     return (
         <LinearGradient colors={colors.gradients.background} style={styles.container}>
@@ -89,6 +167,70 @@ const Settings = () => {
                     </View>
 
                     <View style={[styles.section, { backgroundColor: colors.surface }]}>
+                        <Text style={[styles.sectionTitle, { color: colors.text }]}>Bildirimler</Text>
+                        
+                        <TouchableOpacity 
+                            style={[styles.settingItem, { borderBottomColor: colors.border }]}
+                            activeOpacity={0.7}
+                        >
+                            <View style={styles.settingLeft}>
+                                <View style={[styles.iconWrapper, { backgroundColor: colors.warning }]}>
+                                    <Ionicons 
+                                        name="notifications" 
+                                        size={24} 
+                                        color="#fff"
+                                    />
+                                </View>
+                                <View style={styles.settingTextContainer}>
+                                    <Text style={[styles.settingTitle, { color: colors.text }]}>Bildirimler</Text>
+                                    <Text style={[styles.settingSubtitle, { color: colors.textMuted }]}>
+                                        {notificationsEnabled ? "Bildirimler aktif" : "Bildirimler kapalı"}
+                                    </Text>
+                                </View>
+                            </View>
+                            <Switch
+                                value={notificationsEnabled}
+                                onValueChange={handleNotificationsToggle}
+                                trackColor={{ false: colors.border, true: colors.warning }}
+                                thumbColor={notificationsEnabled ? colors.surface : colors.textMuted}
+                                ios_backgroundColor={colors.border}
+                            />
+                        </TouchableOpacity>
+                    </View>
+
+                    <View style={[styles.section, { backgroundColor: colors.surface }]}>
+                        <Text style={[styles.sectionTitle, { color: colors.text }]}>Senkronizasyon</Text>
+                        
+                        <TouchableOpacity 
+                            style={[styles.settingItem, { borderBottomColor: colors.border }]}
+                            activeOpacity={0.7}
+                        >
+                            <View style={styles.settingLeft}>
+                                <View style={[styles.iconWrapper, { backgroundColor: colors.success }]}>
+                                    <Ionicons 
+                                        name="sync" 
+                                        size={24} 
+                                        color="#fff"
+                                    />
+                                </View>
+                                <View style={styles.settingTextContainer}>
+                                    <Text style={[styles.settingTitle, { color: colors.text }]}>Otomatik Senkronizasyon</Text>
+                                    <Text style={[styles.settingSubtitle, { color: colors.textMuted }]}>
+                                        {autoSyncEnabled ? "Otomatik senkronizasyon aktif" : "Otomatik senkronizasyon kapalı"}
+                                    </Text>
+                                </View>
+                            </View>
+                            <Switch
+                                value={autoSyncEnabled}
+                                onValueChange={handleAutoSyncToggle}
+                                trackColor={{ false: colors.border, true: colors.success }}
+                                thumbColor={autoSyncEnabled ? colors.surface : colors.textMuted}
+                                ios_backgroundColor={colors.border}
+                            />
+                        </TouchableOpacity>
+                    </View>
+
+                    <View style={[styles.section, { backgroundColor: colors.surface }]}>
                         <Text style={[styles.sectionTitle, { color: colors.text }]}>Uygulama Bilgileri</Text>
                         
                         <View style={[styles.settingItem, { borderBottomColor: colors.border }]}>
@@ -119,6 +261,29 @@ const Settings = () => {
                             </View>
                             <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
                         </View>
+                    </View>
+
+                    <View style={[styles.section, { backgroundColor: colors.surface }]}>
+                        <Text style={[styles.sectionTitle, { color: colors.danger }]}>Tehlikeli Bölge</Text>
+                        
+                        <TouchableOpacity 
+                            style={styles.settingItem}
+                            onPress={handleResetApp}
+                            activeOpacity={0.7}
+                        >
+                            <View style={styles.settingLeft}>
+                                <View style={[styles.iconWrapper, { backgroundColor: colors.danger }]}>
+                                    <Ionicons name="trash" size={24} color="#fff" />
+                                </View>
+                                <View style={styles.settingTextContainer}>
+                                    <Text style={[styles.settingTitle, { color: colors.danger }]}>Uygulamayı Sıfırla</Text>
+                                    <Text style={[styles.settingSubtitle, { color: colors.textMuted }]}>
+                                        Tüm görevleri siler ve ayarları sıfırlar
+                                    </Text>
+                                </View>
+                            </View>
+                            <Ionicons name="chevron-forward" size={20} color={colors.danger} />
+                        </TouchableOpacity>
                     </View>
                 </Animated.View>
             </SafeAreaView>
